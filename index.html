@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Bekçi — Siber Zorbalık Metin Analizi</title>
+
+<!-- Ana ekrana eklendiğinde tam ekran / uygulama gibi açılması için -->
+<meta name="theme-color" content="#0E1420" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Bekçi" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23131B2E'/%3E%3Cpath d='M50 18l24 9v18c0 18-13 28-24 37-11-9-24-19-24-37V27z' fill='none' stroke='%2337D6A0' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M39 50l8 8 15-15' fill='none' stroke='%2337D6A0' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23131B2E'/%3E%3Cpath d='M50 18l24 9v18c0 18-13 28-24 37-11-9-24-19-24-37V27z' fill='none' stroke='%2337D6A0' stroke-width='5' stroke-linejoin='round'/%3E%3Cpath d='M39 50l8 8 15-15' fill='none' stroke='%2337D6A0' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+<!--
+  Bu dosya tamamen bağımsızdır: harici hiçbir CDN, font veya script
+  yüklemez. İnternet olmadan, çift tıklayarak açılabilir.
+-->
+
+<style>
+  :root{
+    --ink:#0E1420; --panel:#171F2E; --hair:#2A3446;
+    --text:#F4F6F2; --muted:#9AA6BC; --faint:#5B6577;
+    --safe:#37D6A0; --warn:#FFB454; --risk:#FF5A5A; --hakaret:#FF8A5B; --dislama:#C792FF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:linear-gradient(180deg,#0E1420 0%,#131B2E 100%);
+    font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,system-ui,sans-serif;
+    color:var(--text);
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:44px 20px 60px;}
+  header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:48px;flex-wrap:wrap;gap:16px;}
+  .badge{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .badge .dot{width:32px;height:32px;border-radius:8px;background:#37D6A020;border:1px solid #37D6A055;display:flex;align-items:center;justify-content:center;}
+  .badge span{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-family:ui-monospace,monospace;}
+  h1{font-family:Georgia,'Times New Roman',serif;font-size:44px;margin:0;letter-spacing:-0.01em;}
+  header p{color:var(--muted);max-width:420px;margin:10px 0 0;}
+  .meta{text-align:right;color:var(--faint);font-size:12px;font-family:ui-monospace,monospace;line-height:1.6;}
+  .grid{display:grid;grid-template-columns:3fr 2fr;gap:20px;}
+  @media (max-width:820px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:16px;padding:24px;}
+  label.field-label{font-size:14px;color:var(--muted);display:block;margin-bottom:8px;}
+  textarea{
+    width:100%;min-height:140px;resize:vertical;background:var(--ink);border:1px solid var(--hair);
+    color:var(--text);border-radius:12px;padding:14px;font-size:15px;font-family:inherit;outline:none;
+  }
+  textarea:focus{border-color:var(--safe);box-shadow:0 0 0 3px #37D6A055;}
+  textarea::placeholder{color:var(--faint);}
+  .actions{display:flex;gap:12px;margin-top:16px;align-items:center;}
+  button{font-family:inherit;cursor:pointer;border:none;font-size:14px;}
+  .btn-primary{
+    display:inline-flex;align-items:center;gap:8px;background:var(--safe);color:#0E1420;
+    font-weight:600;border-radius:10px;padding:11px 18px;transition:filter .15s,transform .1s;
+  }
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-primary:active{transform:scale(.98);}
+  .btn-clear{
+    display:inline-flex;align-items:center;gap:8px;border-radius:10px;padding:10px 16px;font-weight:600;
+    color:#FF8A5B;background:#FF8A5B14;border:1px solid #FF8A5B4D;transition:background .15s,border-color .15s,opacity .15s;
+  }
+  .btn-clear:hover:not(:disabled){background:#FF8A5B26;border-color:#FF8A5B80;}
+  .btn-clear:disabled{opacity:.3;cursor:not-allowed;}
+  .examples{margin-top:22px;padding-top:18px;border-top:1px solid var(--hair);}
+  .examples > span{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:ui-monospace,monospace;}
+  .ex-btn{
+    display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;color:var(--muted);
+    padding:7px 8px;margin-top:4px;border-radius:8px;font-size:14px;transition:background .15s,color .15s;
+  }
+  .ex-btn:hover{background:var(--ink);color:var(--text);}
+  .ex-btn .chev{opacity:.4;flex-shrink:0;}
+  .result-card{display:flex;flex-direction:column;align-items:center;}
+  .gauge-wrap{width:100%;max-width:240px;}
+  .verdict{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:14px;font-weight:600;}
+  .verdict-empty{color:var(--faint);font-size:14px;}
+  .cats{width:100%;margin-top:20px;}
+  .cats > span{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:ui-monospace,monospace;}
+  .cat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .chip{font-size:12px;padding:5px 11px;border-radius:999px;font-weight:600;}
+  .hl-card{margin-top:20px;display:none;}
+  .hl-card.show{display:block;}
+  .hl-label,.pipe-label{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;font-family:ui-monospace,monospace;}
+  .hl-text{margin-top:12px;line-height:1.8;color:#E4E8F0;}
+  .hl-text mark{border-radius:4px;padding:0 2px;}
+  .pipeline{margin-top:20px;border-radius:16px;overflow:hidden;background:var(--panel);border:1px solid var(--hair);}
+  .pipe-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;color:var(--text);padding:16px 24px;font-size:14px;font-weight:600;}
+  .pipe-toggle .chev{transition:transform .2s;color:#7C8AA3;}
+  .pipe-toggle.open .chev{transform:rotate(90deg);}
+  .pipe-body{display:none;padding:0 24px 22px;border-top:1px solid var(--hair);padding-top:16px;color:var(--muted);font-size:14px;line-height:1.7;}
+  .pipe-body.show{display:block;}
+  .pipe-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px;}
+  @media (max-width:640px){.pipe-grid{grid-template-columns:1fr;}}
+  .pipe-box{background:var(--ink);border:1px solid var(--hair);border-radius:10px;padding:10px 12px;}
+  .pipe-box .t{font-size:11px;color:var(--faint);font-family:ui-monospace,monospace;margin-bottom:4px;}
+  .pipe-box .v{font-size:12px;color:#E4E8F0;font-family:ui-monospace,monospace;word-break:break-word;}
+  footer{margin-top:44px;text-align:center;font-size:12px;color:var(--faint);font-family:ui-monospace,monospace;}
+  svg{display:block;}
+  .icon{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .globe-wrap::before{
+    content:"";position:absolute;inset:-14px;border-radius:50%;
+    background:radial-gradient(circle, #37D6A02e 0%, transparent 70%);
+    filter:blur(6px);pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="badge">
+        <div class="dot">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" style="color:#37D6A0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <span>Prototip · Bağımsız çalışan HTML sürümü</span>
+      </div>
+      <h1>Bekçi</h1>
+      <p>Türkçe metinlerde olası siber zorbalık ifadelerini analiz eden doğal dil analiz sistemi.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px;">
+      <div style="position:relative;width:120px;height:120px;flex-shrink:0;" class="globe-wrap">
+        <canvas id="globeCanvas" width="120" height="120" style="position:relative;width:120px;height:120px;"></canvas>
+      </div>
+      <div class="meta">
+        2209-A · Malatya Turgut Özal Üniversitesi<br/>
+        Ön İşleme → Öznitelik → Sınıflandırma
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <label class="field-label" for="ta">Analiz edilecek metin</label>
+      <textarea id="ta" placeholder="Örn. bir sosyal medya yorumu yazın veya yapıştırın…"></textarea>
+      <div class="actions">
+        <button class="btn-primary" id="btnAnalyze">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
+          Analiz Et
+        </button>
+        <button class="btn-clear" id="btnClear" disabled>
+          <svg class="icon" width="15" height="15" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+          Temizle
+        </button>
+      </div>
+      <div class="examples">
+        <span>Örnek cümleler</span>
+        <div id="examplesList"></div>
+      </div>
+    </section>
+
+    <section class="card result-card">
+      <label class="field-label" style="align-self:flex-start;">Zorbalık olasılığı</label>
+      <div class="gauge-wrap"><svg id="gauge" viewBox="0 0 200 120"></svg></div>
+      <div id="verdict" class="verdict-empty">Henüz analiz yapılmadı</div>
+      <div class="cats" id="catsBlock" style="display:none;">
+        <span>Tespit edilen kategoriler</span>
+        <div class="cat-chips" id="catChips"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card hl-card" id="hlCard">
+    <span class="hl-label">İşaretlenmiş metin</span>
+    <div class="hl-text" id="hlText"></div>
+  </section>
+
+  <section class="pipeline">
+    <button class="pipe-toggle" id="pipeToggle">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <svg class="icon" width="15" height="15" viewBox="0 0 24 24" style="color:#7C8AA3"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Bu demo nasıl çalışıyor?
+      </span>
+      <svg class="icon chev" width="16" height="16" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <div class="pipe-body" id="pipeBody">
+      <p>Bu sayfa, önerideki Java/Weka tabanlı sistemin <strong style="color:#E4E8F0;">tarayıcıda çalışan, sözlük (lexicon) tabanlı bir temel (baseline) demosudur</strong>. Gerçek sistemde bu adımlar Zemberek NLP ön işleme + TF-IDF/n-gram öznitelikleri + Naive Bayes / Random Forest / Lojistik Regresyon sınıflandırıcıları ile, en az 3.000 etiketli örnek üzerinde eğitilecektir (bkz. Çalışma Takvimi, İş Paketi 1-5).</p>
+      <div class="pipe-grid" id="pipeGrid" style="display:none;">
+        <div class="pipe-box"><div class="t">1 · Ön işleme</div><div class="v" id="pipeTokens">—</div></div>
+        <div class="pipe-box"><div class="t">2 · Kök indirgeme</div><div class="v" id="pipeStems">—</div></div>
+        <div class="pipe-box"><div class="t">3 · Eşleşen öznitelikler</div><div class="v" id="pipeHits">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Halil Celil Keskin · Danışman: Öğr. Gör. Gizem ÇAY · TÜBİTAK 2209-A Araştırma Önerisi Demosu</footer>
+</div>
+
+<script>
+/* ---------------- Model / Lexicon ---------------- */
+const LEXICON = [
+  // — aşağılama —
+  ["aptal",22,"aşağılama"],["salak",24,"aşağılama"],["gerizekalı",30,"aşağılama"],
+  ["geri zekalı",30,"aşağılama"],["mal",14,"aşağılama"],["budala",20,"aşağılama"],
+  ["ahmak",20,"aşağılama"],["değersiz",26,"aşağılama"],["işe yaramaz",28,"aşağılama"],
+  ["çirkin",20,"aşağılama"],["rezil",18,"aşağılama"],["ezik",22,"aşağılama"],
+  ["ucube",24,"aşağılama"],["utanmıyor musun",10,"aşağılama"],["salaksın",24,"aşağılama"],
+  ["aptalsın",22,"aşağılama"],["beceriksiz",18,"aşağılama"],["yeteneksiz",16,"aşağılama"],
+  ["zavallı",20,"aşağılama"],["sefil",20,"aşağılama"],["aciz",16,"aşağılama"],
+  ["cahil",14,"aşağılama"],["bön",14,"aşağılama"],["avanak",16,"aşağılama"],
+  ["koyun kafalı",18,"aşağılama"],["taş kafalı",18,"aşağılama"],["odun kafalı",18,"aşağılama"],
+  ["korkak",12,"aşağılama"],["ödlek",14,"aşağılama"],["tipsiz",18,"aşağılama"],
+  ["şişko",20,"aşağılama"],["cüce",18,"aşağılama"],["hanım evladı",14,"aşağılama"],
+  ["dangalak",22,"aşağılama"],["moron",22,"aşağılama"],["beyinsiz",22,"aşağılama"],
+  // — hakaret —
+  ["ibne",30,"hakaret"],["şerefsiz",30,"hakaret"],["pislik",22,"hakaret"],
+  ["iğrenç",18,"hakaret"],["yalancı",12,"hakaret"],["ahlaksız",20,"hakaret"],
+  ["defol",26,"hakaret"],["namussuz",26,"hakaret"],["alçak",24,"hakaret"],
+  ["adi",18,"hakaret"],["rezalet",16,"hakaret"],["leş",16,"hakaret"],
+  ["süprüntü",22,"hakaret"],["çöp gibisin",20,"hakaret"],["angut",20,"hakaret"],
+  ["hayvan gibisin",16,"hakaret"],["it gibi",14,"hakaret"],
+  // — tehdit —
+  ["geber",40,"tehdit"],["öldür",42,"tehdit"],["canına oku",44,"tehdit"],
+  ["mahvederim",36,"tehdit"],["seni bulurum",30,"tehdit"],["hayatını karartırım",34,"tehdit"],
+  ["yok ol",28,"tehdit"],["ezerim",26,"tehdit"],["gebertirim",40,"tehdit"],
+  ["kafanı ezerim",36,"tehdit"],["seni terbiye ederim",24,"tehdit"],["yaşatmam",30,"tehdit"],
+  ["sonunu getiririm",32,"tehdit"],["seni rezil ederim",24,"tehdit"],
+  ["resmini herkese atarım",32,"tehdit"],["seni ifşa ederim",32,"tehdit"],
+  ["ailene söylerim",14,"tehdit"],["intikam alacağım",28,"tehdit"],
+  ["pişman edeceğim",22,"tehdit"],["okulda halledeceğiz",26,"tehdit"],
+  // — dışlama —
+  ["kimse seni sevmiyor",30,"dışlama"],["kimse seni istemiyor",32,"dışlama"],
+  ["seninle kimse oynamaz",28,"dışlama"],["aramıza katılamazsın",22,"dışlama"],
+  ["seni gruptan atıyoruz",26,"dışlama"],["seni hiç çağırmayacağız",24,"dışlama"],
+  ["sen bizden değilsin",22,"dışlama"],["kimse seninle konuşmuyor",26,"dışlama"],
+  ["herkes senden nefret ediyor",30,"dışlama"],["seninle takılmıyoruz",22,"dışlama"],
+  ["grubumuza giremezsin",22,"dışlama"],["yalnız kal",12,"dışlama"],
+];
+const SUFFIXES = ["lardan","lerden","larla","lerle","dırlar","dirler","sınız","siniz","sın","sin",
+  "lar","ler","dır","dir","dur","dür","ım","im","um","üm","sen","ız","iz","uz","üz",
+  "a","e","ı","i","u","ü","yı","yi","yu","yü","nın","nin","nun","nün","ın","in","un","ün"]
+  .sort((a,b)=>b.length-a.length);
+const STOPWORDS = new Set(["ve","de","da","çok","bir","bu","şu","o","ile","gibi","ama","ki","mi","mı","mu","mü"]);
+const CAT_META = {
+  "tehdit":{label:"Tehdit",color:"#FF5A5A"},
+  "hakaret":{label:"Hakaret",color:"#FF8A5B"},
+  "aşağılama":{label:"Aşağılama",color:"#FFB454"},
+  "dışlama":{label:"Dışlama",color:"#C792FF"},
+};
+const EXAMPLES = [
+  "Bugün hava çok güzel, parkta arkadaşlarımla buluşacağım.",
+  "Sen çok aptalsın, kimse seni sevmiyor zaten.",
+  "Bir daha okula gelirsen seni bulurum, geberteceğim.",
+  "Bu sınavda gerçekten iyi çalıştım, umarım başarılı olurum.",
+];
+
+function lightStem(word){
+  for(const suf of SUFFIXES){
+    if(word.length - suf.length >= 3 && word.endsWith(suf)) return word.slice(0,-suf.length);
+  }
+  return word;
+}
+function normalize(text){
+  return text.toLocaleLowerCase("tr-TR").replace(/[^a-zçğıöşü\s]/g," ").replace(/\s+/g," ").trim();
+}
+function analyze(raw){
+  const clean = normalize(raw);
+  const tokens = clean.split(" ").filter(t=>t && !STOPWORDS.has(t));
+  const stems = tokens.map(t=>({raw:t, stem:lightStem(t)}));
+  const hits = [];
+  for(const [root,weight,cat] of LEXICON){
+    if(root.includes(" ")){ if(clean.includes(root)) hits.push({root,weight,cat,matched:root}); }
+  }
+  for(const {raw:rawTok, stem} of stems){
+    for(const [root,weight,cat] of LEXICON){
+      if(root.includes(" ")) continue;
+      if(stem===root || rawTok===root || stem.startsWith(root)){ hits.push({root,weight,cat,matched:rawTok}); break; }
+    }
+  }
+  const totalWeight = hits.reduce((s,h)=>s+h.weight,0);
+  const raw01 = 1 - 1/(1+totalWeight/32);
+  const noiseFloor = 0.03 + Math.min(tokens.length,40)*0.0015;
+  const prob = Math.min(0.98, Math.max(hits.length ? raw01 : noiseFloor, hits.length ? 0.12 : 0));
+  const categories = {};
+  for(const h of hits) categories[h.cat] = (categories[h.cat]||0)+1;
+  return {tokens, stems, hits, prob, categories, clean};
+}
+
+/* ---------------- Gauge ---------------- */
+function arcPath(from,to,r,cx,cy){
+  const p1={x:cx+r*Math.cos(Math.PI*from/180), y:cy+r*Math.sin(Math.PI*from/180)};
+  const p2={x:cx+r*Math.cos(Math.PI*to/180), y:cy+r*Math.sin(Math.PI*to/180)};
+  const large = to-from>180?1:0;
+  return `M ${p1.x} ${p1.y} A ${r} ${r} 0 ${large} 1 ${p2.x} ${p2.y}`;
+}
+function renderGauge(prob){
+  const r=78, cx=100, cy=100;
+  const color = prob<0.35?"#37D6A0":prob<0.65?"#FFB454":"#FF5A5A";
+  const angle = -90 + prob*180;
+  const svg = document.getElementById("gauge");
+  svg.innerHTML = `
+    <path d="${arcPath(180,240,r,cx,cy)}" stroke="#2A3446" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="${arcPath(240,300,r,cx,cy)}" stroke="#2A3446" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="${arcPath(300,360,r,cx,cy)}" stroke="#2A3446" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="${arcPath(180,180+prob*180,r,cx,cy)}" stroke="${color}" stroke-width="14" fill="none" stroke-linecap="round" style="transition:d .6s cubic-bezier(.4,1.4,.4,1)"/>
+    <g transform="rotate(${angle} ${cx} ${cy})" style="transition:transform .6s cubic-bezier(.4,1.4,.4,1)">
+      <line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy-r+10}" stroke="#F4F6F2" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <circle cx="${cx}" cy="${cy}" r="6" fill="#F4F6F2"/>
+    <text x="${cx}" y="${cy+34}" text-anchor="middle" fill="#F4F6F2" font-size="26" font-weight="700" font-family="ui-monospace,monospace">${Math.round(prob*100)}%</text>
+  `;
+}
+
+/* ---------------- Rendering ---------------- */
+const ta = document.getElementById("ta");
+const btnClear = document.getElementById("btnClear");
+let lastResult = null;
+
+function renderVerdict(result){
+  const el = document.getElementById("verdict");
+  if(!result){ el.className="verdict-empty"; el.textContent="Henüz analiz yapılmadı"; return; }
+  const p = result.prob;
+  let icon, color, label;
+  if(p<0.35){ color="#37D6A0"; label="Zararsız görünüyor"; icon='<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M9 12l2 2 4-4"/>'; }
+  else if(p<0.65){ color="#FFB454"; label="Belirsiz / gözden geçirin"; icon='<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 4.9 2.5c-.7.6-1.5 1-1.5 2.5M12 17h.01"/>'; }
+  else{ color="#FF5A5A"; label="Zorbalık riski yüksek"; icon='<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8v5M12 16h.01"/>'; }
+  el.className="verdict";
+  el.style.color=color;
+  el.innerHTML = `<svg class="icon" width="16" height="16" viewBox="0 0 24 24">${icon}</svg><span>${label}</span>`;
+}
+
+function renderCats(result){
+  const block = document.getElementById("catsBlock");
+  const chips = document.getElementById("catChips");
+  if(!result || result.hits.length===0){ block.style.display="none"; chips.innerHTML=""; return; }
+  block.style.display="block";
+  chips.innerHTML = Object.entries(result.categories).map(([cat,count])=>{
+    const meta = CAT_META[cat];
+    return `<span class="chip" style="background:${meta.color}22;color:${meta.color};border:1px solid ${meta.color}55;">${meta.label} × ${count}</span>`;
+  }).join("");
+}
+
+function renderHighlight(raw, result){
+  const card = document.getElementById("hlCard");
+  const box = document.getElementById("hlText");
+  if(!result || !raw.trim()){ card.classList.remove("show"); box.innerHTML=""; return; }
+  card.classList.add("show");
+  const parts = raw.split(/(\s+)/);
+  box.innerHTML = parts.map(part=>{
+    const norm = normalize(part);
+    const hit = result.hits.find(h => normalize(h.matched)===norm || (h.matched.includes(" ") && normalize(raw).includes(h.matched)));
+    if(hit && norm){
+      const meta = CAT_META[hit.cat];
+      return `<mark style="background:${meta.color}26;box-shadow:inset 0 -2px 0 0 ${meta.color};color:inherit;">${escapeHtml(part)}</mark>`;
+    }
+    return escapeHtml(part);
+  }).join("");
+}
+function escapeHtml(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function renderPipeline(result){
+  const grid = document.getElementById("pipeGrid");
+  if(!result){ grid.style.display="none"; return; }
+  grid.style.display="grid";
+  document.getElementById("pipeTokens").textContent = result.tokens.slice(0,12).join(" · ") || "—";
+  document.getElementById("pipeStems").textContent = result.stems.slice(0,12).map(s=>s.stem).join(" · ") || "—";
+  document.getElementById("pipeHits").textContent = result.hits.length ? result.hits.map(h=>h.matched).join(" · ") : "eşleşme yok";
+}
+
+function updateClearState(){
+  const isEmpty = ta.value.trim().length===0 && lastResult===null;
+  btnClear.disabled = isEmpty;
+}
+
+function run(val){
+  const v = val !== undefined ? val : ta.value;
+  ta.value = v;
+  lastResult = analyze(v);
+  renderGauge(lastResult.prob);
+  renderVerdict(lastResult);
+  renderCats(lastResult);
+  renderHighlight(v, lastResult);
+  renderPipeline(lastResult);
+  updateClearState();
+}
+
+function handleClear(){
+  ta.value = "";
+  lastResult = null;
+  renderGauge(0);
+  renderVerdict(null);
+  renderCats(null);
+  renderHighlight("", null);
+  renderPipeline(null);
+  document.getElementById("pipeBody").classList.remove("show");
+  document.getElementById("pipeToggle").classList.remove("open");
+  updateClearState();
+  requestAnimationFrame(()=>ta.focus());
+}
+
+/* ---------------- Wire up ---------------- */
+renderGauge(0);
+document.getElementById("btnAnalyze").addEventListener("click", ()=>run());
+btnClear.addEventListener("click", handleClear);
+ta.addEventListener("input", updateClearState);
+
+const exList = document.getElementById("examplesList");
+EXAMPLES.forEach(ex=>{
+  const b = document.createElement("button");
+  b.className = "ex-btn";
+  b.innerHTML = `<svg class="icon chev" width="13" height="13" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(ex)}</span>`;
+  b.addEventListener("click", ()=>run(ex));
+  exList.appendChild(b);
+});
+
+const pipeToggle = document.getElementById("pipeToggle");
+const pipeBody = document.getElementById("pipeBody");
+pipeToggle.addEventListener("click", ()=>{
+  pipeBody.classList.toggle("show");
+  pipeToggle.classList.toggle("open");
+});
+
+updateClearState();
+
+/* ---------------------------------------------------------------
+   Dekoratif "global" küre — saf Canvas 2D + temel 3B izdüşüm.
+   Herhangi bir veri/işlevle bağlantısı yoktur, sadece görsel imzadır.
+------------------------------------------------------------------*/
+(function initGlobe(){
+  const canvas = document.getElementById("globeCanvas");
+  if(!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, R = W*0.42;
+
+  const N = 130;
+  const pts = [];
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  for(let i=0;i<N;i++){
+    const y = 1 - (i/(N-1))*2;
+    const r = Math.sqrt(1-y*y);
+    const theta = golden*i;
+    pts.push({
+      x: Math.cos(theta)*r,
+      y: y,
+      z: Math.sin(theta)*r,
+      accent: (i % 9 === 0)
+    });
+  }
+  const markers = [4, 19, 38, 57, 79, 101, 118];
+
+  let angle = 0;
+  function frame(){
+    angle += 0.0032;
+    ctx.clearRect(0,0,W,H);
+
+    const grad = ctx.createRadialGradient(cx-R*0.3, cy-R*0.3, R*0.1, cx, cy, R*1.05);
+    grad.addColorStop(0, "rgba(55,214,160,0.10)");
+    grad.addColorStop(1, "rgba(14,20,32,0.0)");
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*1.02, 0, Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI*2);
+    ctx.strokeStyle = "rgba(55,214,160,0.22)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    for(let lat=-60; lat<=60; lat+=30){
+      const rad = Math.cos(lat*Math.PI/180);
+      const yOff = Math.sin(lat*Math.PI/180)*R;
+      ctx.beginPath();
+      for(let a=0;a<=360;a+=6){
+        const rx = Math.cos(a*Math.PI/180)*rad*R;
+        const rz = Math.sin(a*Math.PI/180)*rad*R;
+        const rot = rx*Math.cos(angle) - rz*Math.sin(angle);
+        const px = cx + rot;
+        const py = cy + yOff*0.94;
+        if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.strokeStyle = "rgba(55,214,160,0.08)";
+      ctx.stroke();
+    }
+
+    const projected = pts.map((p,i)=>{
+      const rx = p.x*Math.cos(angle) - p.z*Math.sin(angle);
+      const rz = p.x*Math.sin(angle) + p.z*Math.cos(angle);
+      return { x: cx + rx*R, y: cy + p.y*R, z: rz, idx:i, accent:p.accent };
+    }).sort((a,b)=>a.z-b.z);
+
+    projected.forEach(p=>{
+      const depth = (p.z+1)/2;
+      const isMarker = markers.includes(p.idx);
+      const size = isMarker ? 2.6 : (1.1 + depth*1.6);
+      const alpha = 0.15 + depth*0.75;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size, 0, Math.PI*2);
+      if(isMarker){
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      } else if(p.accent){
+        ctx.fillStyle = `rgba(199,146,255,${alpha*0.9})`;
+      } else {
+        ctx.fillStyle = `rgba(55,214,160,${alpha*0.9})`;
+      }
+      ctx.fill();
+    });
+
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+</body>
+</html>
